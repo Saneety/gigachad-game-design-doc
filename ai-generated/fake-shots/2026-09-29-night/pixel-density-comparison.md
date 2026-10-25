@@ -1,0 +1,18 @@
+# Сравнение плотности пиксель-арта
+
+Запрос: одна ночная сцена в вариантах 8×8, 16×16, 32×32, 64×64 и 128×128. За основу взят night-03-modular.png. Размер обозначает предполагаемое количество арт-пикселей на тайл, не битность цвета.
+
+![[pixel-density-comparison.png]]
+
+Создано встроенным imagegen. Это визуальная интерпретация плотности, а не пять технически точных тайлсетов. Композиция и смысл сцены сохранены; грубая и мелкая детализация различаются, но точная сетка не гарантирована. При показе всего листа отличия 64 и 128 слабее из-за масштаба просмотра.
+
+## Промпт
+
+```text
+Create ONE high-resolution comparison contact sheet showing FIVE different PIXEL DENSITIES of the SAME attached nighttime fantasy-factory gameplay scene. Reference image is the edit target. This is a controlled pixel-art resolution study, NOT five variations of composition or palette. Use a clean 2-column by 3-row layout on dark navy background, equally sized 16:9 screenshot panels: row 1 left "8×8", row 1 right "16×16"; row 2 left "32×32", row 2 right "64×64"; row 3 left "128×128". Bottom right is a small explanatory key with only the text "PIXELS PER TILE" and five square pixel-size swatches. Labels in clean white typography ABOVE each panel outside the artwork. Output large enough to inspect the difference, ideally 3840 px wide.
+
+Each panel shows the EXACT SAME full scene at identical camera, framing, geometry, relative object sizes and positions: left drill on grey ore, horizontal belt to orange furnace, central vertical brass piston press, gears turning right/down into crate, rectangular cyan liquid tank above, four-pedestal cyan crystal altar at right, small armored player below, forest edge and bottom-left river. Preserve NIGHT, same blue-green ambient, warm furnace light and cool cyan altar light, same brightness, same soft light radii and contrast. Simplify HUD consistently or omit HUD from ALL panels to devote screen area to scene. No new architecture, no object relocation, no zoom changes.
+
+The ONLY change across panels is authored pixel resolution per terrain tile; machines occupy approx 3×3 tiles in all panels. VERY IMPORTANT: visually radical coarse-to-fine progression, each successive panel has half the displayed pixel width of previous panel. Not five equally detailed images with different labels. All panels razor-sharp intentional square pixels, nearest-neighbor style, NEVER blurred pixelation filter. At 8×8 per tile: enormous crisp square pixel clusters, furnace only about 24×24 source pixels, extremely simplified flame, 2-3 tones, ore individual 2-3 pixel shapes, chunky silhouette-first tree masses, no rivets or detailed brick textures. At 16×16: furnace 48×48 source pixels, readable blocks and piston, modest foliage, 3-4 shades. At 32×32: furnace 96×96 source pixels, finer brickwork, iron bevels, gear teeth, moderate foliage clusters. At 64×64: furnace 192×192 source pixels, refined pixel craftsmanship, pipes/rivets, nuanced stone and leaf textures. At 128×128: furnace 384×384 source pixels, exceptionally fine intricate handcrafted pixel art, highest material detail, fine pixel highlights, still pixel art NOT photograph/3D render. Add detail by redrawing at target density, not changing object scale or merely sharpening. Coarsest MUST look strikingly coarser than source and finest much finer. Preserve visible machinery processes and easily traceable ore→ingot→gear pipeline across all five. Do not confuse tile resolution with whole-image resolution or palette bit depth. This is one comparison artifact containing exactly five screenshot panels.
+```
+

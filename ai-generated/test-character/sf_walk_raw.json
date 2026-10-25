@@ -1,0 +1,12 @@
+{
+  "type": "animation",
+  "prompt": "walking to the right in place, steady heavy strides, both legs fully pass each other, arms swing opposite to the legs with loose fists, head stays level, slight body bob",
+  "width": 96,
+  "height": 96,
+  "frame_w": 96,
+  "frame_h": 96,
+  "frame_count": 8,
+  "fps": 8,
+  "preview": "preview.webp",
+  "spritesheet": "spritesheet.png"
+}

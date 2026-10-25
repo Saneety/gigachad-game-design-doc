@@ -1,0 +1,8 @@
+# Obsidian window layout: changes on every open
+.obsidian/workspace.json
+
+# Godot marker of the game repository this vault sits in
+.gdignore
+
+# Codex run transcripts written next to generated images
+*.log
