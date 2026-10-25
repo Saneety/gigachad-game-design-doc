@@ -27,7 +27,7 @@
 
 - Стримы целиком: https://www.youtube.com/playlist?list=PLMwHNDOtPKyI
 - Нарезки стримов: https://www.youtube.com/playlist?list=PLIxU8WbM3hmo
-- Холст со стримов: https://app.holst.so/board/ea03daaf-c3c4-44d9-aece-42b6070e0f22
+- Холст со стримов: https://app.holst.so/share/b/ea03daaf-c3c4-44d9-aece-42b6070e0f22
 - YouTube: https://www.youtube.com/@burning_cult
 - Telegram, там пишу больше про разработку игр с ИИ: https://t.me/+wY4ZTOxIcjU1Y2Yy
 
