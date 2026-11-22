@@ -9,7 +9,7 @@ Module._load = function (request, ...rest) {
 };
 const { logic } = require('./main.js');
 Module._load = load;
-const { splitRow, parseTables, formatComment, adjustWidths, fitWidths, COMMENT_RE } = logic;
+const { splitRow, parseTables, headingGaps, formatComment, adjustWidths, fitWidths, COMMENT_RE } = logic;
 
 let passed = 0;
 function test(name, fn) {
@@ -56,6 +56,33 @@ test('two tables', () => {
   assert.strictEqual(t.length, 2);
   assert.strictEqual(t[0].comment, null);
   assert.deepStrictEqual(t[1].widths, [50]);
+});
+
+const gapsOf = (lines) => headingGaps((i) => lines[i], parseTables(lines));
+
+test('headingGaps: the empty line between a heading and a table', () => {
+  assert.deepStrictEqual(gapsOf(['## Keys', '', '| A | B |', '|---|---|', '| 1 | 2 |']), [1]);
+  assert.deepStrictEqual(gapsOf(['text', '# Keys', '  ', '| A |', '| - |']), [2]);
+  assert.deepStrictEqual(gapsOf(['   ###### Keys', '', '| A |', '| - |']), [1]);
+});
+
+test('headingGaps: widths line between the heading and the table', () => {
+  assert.deepStrictEqual(gapsOf(['## Keys', '', '<!-- col-widths: 50 -->', '', '| A |', '| - |']), [1]);
+  assert.deepStrictEqual(gapsOf(['## Keys', '<!-- col-widths: 50 -->', '', '| A |', '| - |']), []);
+});
+
+test('headingGaps: nothing to hide', () => {
+  assert.deepStrictEqual(gapsOf(['some text', '', '| A |', '| - |']), []); // the empty line is needed after text
+  assert.deepStrictEqual(gapsOf(['## Keys', '', '', '| A |', '| - |']), []); // two empty lines: the human is typing there
+  assert.deepStrictEqual(gapsOf(['#tag', '', '| A |', '| - |']), []); // a tag, not a heading
+  assert.deepStrictEqual(gapsOf(['    # code', '', '| A |', '| - |']), []); // indented code, not a heading
+  assert.deepStrictEqual(gapsOf(['', '| A |', '| - |']), []); // empty line at the top of the note
+  assert.deepStrictEqual(gapsOf(['## Keys', '| A |', '| - |']), []); // table right under the heading
+});
+
+test('headingGaps: two tables under two headings', () => {
+  const lines = ['# One', '', '| A |', '| - |', '| 1 |', '', '# Two', '', '| B |', '|---|'];
+  assert.deepStrictEqual(gapsOf(lines), [1, 7]);
 });
 
 test('formatComment round-trips', () => {

@@ -12,6 +12,10 @@
  * - Obsidian's own table menu (add / delete / move columns) keeps working; when
  *   it changes the columns of a table with stored widths, the widths line is
  *   fixed in the same transaction, so one Ctrl+Z restores both.
+ * - Live Preview also hides the empty line between a heading and the table
+ *   under it. Obsidian keeps an empty line above every table and puts it back
+ *   when it is deleted, though a table right under a heading needs none. The
+ *   line stays in the note and shows while the cursor is on it.
  */
 
 const obsidian = require('obsidian');
@@ -23,6 +27,7 @@ const obsidian = require('obsidian');
 const COMMENT_RE = /^\s*<!--\s*col-widths:\s*([0-9.\s]*?)\s*-->\s*$/;
 const DELIM_RE = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
 const FENCE_RE = /^\s*(`{3,}|~{3,})/;
+const HEADING_RE = /^ {0,3}#{1,6}(\s|$)/;
 const MIN_WIDTH = 40;
 const DEFAULT_WIDTH = 120;
 
@@ -85,6 +90,19 @@ function parseTables(lines) {
     if (comment !== null && !widths) { comment = null; blank = null; }
     out.push({ header: i, delim: i + 1, end, cols: headers.length, headers, comment, blank, widths });
     i = end;
+  }
+  return out;
+}
+
+/**
+ * The empty line between a heading and a table (or the table's widths line), one per table
+ * at most. lineText(i) returns the text of 0-based line i. Returns 0-based line indexes.
+ */
+function headingGaps(lineText, tables) {
+  const out = [];
+  for (const t of tables) {
+    const gap = (t.comment !== null ? t.comment : t.header) - 1;
+    if (gap >= 1 && lineText(gap).trim() === '' && HEADING_RE.test(lineText(gap - 1))) out.push(gap);
   }
   return out;
 }
@@ -219,11 +237,20 @@ class WideTablesPlugin extends obsidian.Plugin {
     });
     this.tablesField = tablesField;
 
-    // Hide the widths comment (and the empty line under it) in Live Preview.
+    // Hide in Live Preview: the empty line between a heading and a table (unless the cursor
+    // is on it), and the widths comment with the empty line under it.
     const buildHidden = (state) => {
       if (!isLivePreview(state)) return Decoration.none;
       const b = new RangeSetBuilder();
-      for (const t of state.field(tablesField)) {
+      const tables = state.field(tablesField);
+      const gaps = new Set(headingGaps((i) => state.doc.line(i + 1).text, tables));
+      const heads = state.selection.ranges.map((r) => r.head);
+      for (const t of tables) {
+        const gapIndex = (t.comment !== null ? t.comment : t.header) - 1;
+        if (gaps.has(gapIndex)) {
+          const gap = state.doc.line(gapIndex + 1);
+          if (!heads.some((h) => h >= gap.from && h <= gap.to)) b.add(gap.from, gap.to, Decoration.replace({ block: true }));
+        }
         if (t.comment === null) continue;
         const from = state.doc.line(t.comment + 1).from;
         const to = state.doc.line((t.blank === null ? t.comment : t.blank) + 1).to;
@@ -234,7 +261,7 @@ class WideTablesPlugin extends obsidian.Plugin {
     const hiddenField = StateField.define({
       create: buildHidden,
       update: (value, tr) => {
-        if (tr.docChanged || isLivePreview(tr.startState) !== isLivePreview(tr.state)) return buildHidden(tr.state);
+        if (tr.docChanged || tr.selection || isLivePreview(tr.startState) !== isLivePreview(tr.state)) return buildHidden(tr.state);
         return value;
       },
       provide: (f) => [EditorView.decorations.from(f), EditorView.atomicRanges.of((view) => view.state.field(f))],
@@ -510,4 +537,4 @@ class WideTablesPlugin extends obsidian.Plugin {
 }
 
 module.exports = WideTablesPlugin;
-module.exports.logic = { splitRow, parseWidths, formatComment, parseTables, fitWidths, adjustWidths, sameWidths, COMMENT_RE };
+module.exports.logic = { splitRow, parseWidths, formatComment, parseTables, headingGaps, fitWidths, adjustWidths, sameWidths, COMMENT_RE };
