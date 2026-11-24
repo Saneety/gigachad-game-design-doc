@@ -1,6 +1,9 @@
 # Obsidian window layout: changes on every open
 .obsidian/workspace.json
 
+# Cult Canvas: the last picked marker colour, shape and card styles, changes on every pick
+.obsidian/plugins/cult-canvas/data.json
+
 # Godot marker of the game repository this vault sits in
 .gdignore
 

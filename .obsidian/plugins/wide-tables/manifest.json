@@ -1,9 +1,0 @@
-{
-  "id": "wide-tables",
-  "name": "Wide Tables",
-  "version": "1.0.0",
-  "minAppVersion": "1.5.0",
-  "description": "Tables may be wider than the readable line width and scroll sideways; drag column edges to set widths. Widths live in the note, so Ctrl+Z undoes them.",
-  "author": "Saneety",
-  "isDesktopOnly": false
-}

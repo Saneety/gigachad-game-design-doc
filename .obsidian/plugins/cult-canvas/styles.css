@@ -1,0 +1,766 @@
+/* Cult Canvas: whiteboard look for canvases. Everything is scoped to .gb-board (the canvas wrapper). */
+
+/* The two card popup buttons of this plugin, in the YAML that Advanced Canvas reads from style sheets.
+   Advanced Canvas stores the choice in styleAttributes.gbKind / gbSize and exposes it as data-gb-kind /
+   data-gb-size. Their labels are in English, as are the other buttons of that Advanced Canvas popup. */
+
+/* @advanced-canvas-node-style
+key: gb-kind
+label: Card type
+icon: sticky-note
+nodeTypes: [text]
+options:
+  - label: Card
+    value: null
+    icon: square
+  - label: Sticky note
+    value: sticky
+    icon: sticky-note
+  - label: Text without border
+    value: text
+    icon: type
+*/
+
+/* @advanced-canvas-node-style
+key: gb-size
+label: Text size
+icon: a-large-small
+nodeTypes: [text, file]
+options:
+  - label: M (normal)
+    value: null
+    icon: case-sensitive
+  - label: S
+    value: s
+    icon: a-arrow-down
+  - label: L
+    value: l
+    icon: a-arrow-up
+  - label: XL
+    value: xl
+    icon: heading-1
+*/
+
+/* The card text editor is an iframe whose body is .canvas-node-iframe-body (it loads this file too, and
+   Advanced Canvas copies the card's data-* attributes onto that body): the editor rules below mirror the
+   card rules, so text looks the same while editing as after it. */
+.canvas-wrapper.gb-board,
+body.canvas-node-iframe-body {
+  --gb-red: #FF5A3D;
+  --gb-blue: #5DB2FF;
+  --gb-ink: #EDEDED;
+  --gb-soft: #A3A6AD;
+  --gb-green: #7CE8A6;
+  --gb-sticky: #FFF59A;
+  --gb-sticky-ink: #3a3500;
+  --gb-bg: #26282C;
+  --gb-card: #30333A;
+  --gb-line: #42454D;
+  --gb-font: 'Cult Canvas Shantell', var(--font-interface);
+
+  color-scheme: dark;
+  --canvas-background: var(--gb-bg);
+  --canvas-dot-pattern: #3A3D44;
+  --canvas-card-label-color: var(--gb-soft);
+  --background-primary: var(--gb-card);
+  --background-primary-alt: #2B2E34;
+  --background-secondary: #2B2E34;
+  --background-modifier-border: var(--gb-line);
+  --background-modifier-hover: rgba(255, 255, 255, 0.07);
+  --interactive-normal: var(--gb-card);
+  --interactive-hover: #3A3E46;
+  --text-normal: var(--gb-ink);
+  --text-muted: var(--gb-soft);
+  --text-faint: #7D818A;
+  --icon-color: var(--gb-soft);
+  --icon-color-hover: var(--gb-ink);
+  --color-accent: var(--gb-blue);
+  --link-color: var(--gb-blue);
+  --link-color-hover: #8CC9FF;
+  --link-unresolved-color: var(--gb-blue);
+  --link-unresolved-opacity: 0.65;
+  /* --font-text is resolved on body, so overriding --font-text-override here would not reach the cards */
+  --font-text: var(--gb-font);
+  --font-editor: var(--gb-font);
+  --bold-weight: 700;
+}
+
+/* ---------- cards */
+
+.gb-board .canvas-node,
+body.canvas-node-iframe-body .markdown-source-view { --font-text-size: var(--gb-font-size, 18px); }
+.gb-board .canvas-node[data-gb-size="s"],
+body.canvas-node-iframe-body[data-gb-size="s"] .markdown-source-view { --font-text-size: 14px; }
+.gb-board .canvas-node[data-gb-size="l"],
+body.canvas-node-iframe-body[data-gb-size="l"] .markdown-source-view { --font-text-size: 26px; }
+.gb-board .canvas-node[data-gb-size="xl"],
+body.canvas-node-iframe-body[data-gb-size="xl"] .markdown-source-view { --font-text-size: 38px; }
+.gb-board .canvas-node-content .markdown-rendered,
+.gb-board .canvas-node-content .markdown-source-view,
+body.canvas-node-iframe-body .markdown-source-view { font-size: var(--font-text-size); }
+
+.gb-board .canvas-node:not(.is-themed):not(.is-selected):not(.is-focused) > .canvas-node-container { border-color: var(--gb-line); }
+
+/* fill and border chosen in the popup (main.js sets the variables); the repeated classes outweigh the rules for
+   stickies, free text, themed and selected cards */
+.gb-board .canvas-node.gb-has-fill.gb-has-fill.gb-has-fill > .canvas-node-container { background: var(--gb-node-fill); }
+.gb-board .canvas-node.gb-has-border.gb-has-border.gb-has-border > .canvas-node-container { border-color: var(--gb-node-border); }
+
+/* round and pointed shapes keep the text inside the outline */
+.gb-board .canvas-node[data-shape="diamond"] .markdown-preview-view { padding-inline: 22%; }
+.gb-board .canvas-node[data-shape="circle"] .markdown-preview-view { padding-inline: 14%; }
+
+/* ---------- the card text editor (iframe): same font, size, colours, alignment and padding as the card */
+
+/* main.js marks the editor's <html> with .gb-editor-root; the long selectors outweigh Obsidian's and themes'
+   editor backgrounds */
+html.gb-editor-root { color-scheme: dark; background: transparent; }
+body.canvas-node-iframe-body,
+body.canvas-node-iframe-body .markdown-source-view.mod-inside-iframe,
+body.canvas-node-iframe-body .markdown-source-view.mod-inside-iframe > .cm-editor,
+body.canvas-node-iframe-body .markdown-source-view.mod-inside-iframe > .cm-editor > .cm-scroller { background: transparent; }
+body.canvas-node-iframe-body[data-text-align="center"] .cm-line { text-align: center; }
+body.canvas-node-iframe-body[data-text-align="right"] .cm-line { text-align: right; }
+/* centred text sits in the middle of the card with no scrollbar gutter, as Advanced Canvas shows it after
+   editing; the long selectors outweigh Obsidian's own .mod-inside-iframe scroller rules */
+body.canvas-node-iframe-body[data-text-align="center"] .markdown-source-view.mod-inside-iframe > .cm-editor > .cm-scroller {
+  justify-content: safe center;
+  scrollbar-gutter: auto;
+}
+body.canvas-node-iframe-body[data-text-align="center"] .markdown-source-view.mod-inside-iframe > .cm-editor > .cm-scroller > .cm-sizer { flex: 0 0 auto; }
+body.canvas-node-iframe-body[data-shape="diamond"] .markdown-source-view.mod-inside-iframe > .cm-editor > .cm-scroller { padding-inline: 22%; }
+body.canvas-node-iframe-body[data-shape="circle"] .markdown-source-view.mod-inside-iframe > .cm-editor > .cm-scroller { padding-inline: 14%; }
+body.canvas-node-iframe-body[data-gb-kind="text"].gb-themed { --text-normal: var(--canvas-color); }
+
+/* Advanced Canvas drops the diamond outline and the database text shift while editing: keep both. Its own
+   rules apply the same values only while not editing, so these apply them always. */
+.gb-board .canvas-node[data-shape="diamond"] .canvas-node-container {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 141.42135624 141.42135624' preserveAspectRatio='none'%3E%3Cstyle%3E rect %7B transform-origin: center; transform: rotate(45deg) scale(1.05); %7D %3C/style%3E%3Crect rx='8' x='20.71067812' y='20.71067812' width='100' height='100' /%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 141.42135624 141.42135624' preserveAspectRatio='none'%3E%3Cstyle%3E rect %7B transform-origin: center; transform: rotate(45deg) scale(1.05); %7D %3C/style%3E%3Crect rx='8' x='20.71067812' y='20.71067812' width='100' height='100' /%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-size: 100%;
+  -webkit-mask-size: 100%;
+}
+.gb-board .canvas-node[data-shape="database"] .canvas-node-content { transform: translateY(20px); }
+
+/* Entering editing: Canvas hides the rendered text at once, but the new editor draws its text a frame or
+   two later, so the card blinked empty. Until main.js marks the editor .gb-ready (its text is drawn), the
+   editor stays invisible and main.js keeps the rendered text shown on top (.gb-preview-hold); both switch
+   in one frame. The animation shows the editor anyway after a moment if the script never marks it. */
+.gb-board .canvas-node-content > .markdown-embed-content > iframe.embed-iframe:not(.gb-ready) {
+  opacity: 0;
+  animation: gb-editor-reveal 0s linear 0.8s forwards;
+}
+.gb-board .canvas-node-content > .markdown-embed-content.gb-preview-hold {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* card text on the board is drawn with grey anti-aliasing; the editor in its own layer is drawn the same
+   way, otherwise its letter edges change colour when editing starts */
+.gb-board .canvas-node-content > .markdown-embed-content > iframe.embed-iframe { will-change: transform; }
+@keyframes gb-editor-reveal { to { opacity: 1; } }
+
+/* sticky: yellow note with a shadow; a colour from the card menu replaces the yellow */
+.gb-board .canvas-node[data-gb-kind="sticky"],
+body.canvas-node-iframe-body[data-gb-kind="sticky"] {
+  --text-normal: var(--gb-sticky-ink);
+  --text-muted: #5C5520;
+  --text-faint: #7A7340;
+  --link-color: #7A3410;
+  --link-color-hover: #A1491B;
+  --link-unresolved-color: #7A3410;
+  --background-primary: var(--gb-sticky);
+  --background-modifier-border: rgba(0, 0, 0, 0.15);
+}
+.gb-board .canvas-node[data-gb-kind="sticky"] > .canvas-node-container {
+  background: var(--gb-sticky);
+  border-color: transparent;
+  border-radius: 4px;
+}
+.gb-board .canvas-node[data-gb-kind="sticky"].is-themed > .canvas-node-container,
+.gb-board .canvas-node[data-gb-kind="sticky"].is-themed { --background-primary: color-mix(in srgb, var(--canvas-color) 45%, #FFFBEA); }
+.gb-board .canvas-node[data-gb-kind="sticky"].is-themed > .canvas-node-container { background: var(--background-primary); }
+.gb-board .canvas-node[data-gb-kind="sticky"]:not(.is-selected):not(.is-focused) > .canvas-node-container {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.38);
+}
+
+/* free text: no frame until hovered or selected; a colour from the card menu colours the text */
+.gb-board .canvas-node[data-gb-kind="text"]:not(.is-selected):not(.is-focused) > .canvas-node-container {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.gb-board .canvas-node[data-gb-kind="text"] > .canvas-node-container { background: transparent; }
+.gb-board .canvas-node[data-gb-kind="text"]:not(.is-selected):not(.is-focused):hover > .canvas-node-container {
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+.gb-board .canvas-node[data-gb-kind="text"].is-themed { --text-normal: var(--canvas-color); }
+
+/* frames (groups): thin outline, blue handwritten title above */
+.gb-board .canvas-node-group > .canvas-node-container {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.gb-board .canvas-node-group:not(.is-themed):not(.is-selected):not(.is-focused) > .canvas-node-container {
+  border: 1.5px solid #4A4E57;
+  box-shadow: none;
+}
+.gb-board .canvas-group-label {
+  font-family: var(--gb-font);
+  font-weight: 600;
+  font-size: 2em;
+}
+.gb-board .canvas-node-group:not(.is-themed) .canvas-group-label:not([contenteditable="true"]) {
+  color: var(--gb-blue);
+  background: transparent;
+}
+
+/* arrows: red by default and a bit thicker, handwritten labels */
+.gb-board .canvas-edges { --canvas-color: var(--gb-red); }
+.gb-board .canvas-edges path.canvas-display-path { stroke-width: calc(var(--gb-edge-width, 3px) * var(--zoom-multiplier)); stroke-linecap: round; }
+.gb-board .canvas-path-label {
+  font-family: var(--gb-font);
+  font-size: 1.15em;
+  color: var(--gb-ink);
+  background-color: var(--gb-bg);
+}
+
+/* ---------- marker strokes: a card whose box is invisible, only the line catches the pointer */
+
+.gb-board .canvas-node.gb-stroke { pointer-events: none; }
+/* the repeated classes outweigh Obsidian's strongest card box rule,
+   .canvas-node.is-selected.is-themed.is-dragging .canvas-node-container */
+.gb-board .canvas-node.gb-stroke.gb-stroke > .canvas-node-container.canvas-node-container {
+  background: transparent;
+  border-color: transparent;
+  border-width: 0; /* a border would push the line 1 px inside the box and squeeze it */
+  box-shadow: none;
+  pointer-events: none;
+  overflow: visible;
+}
+.gb-board .canvas-node.gb-stroke > .canvas-node-container > :not(.gb-stroke-svg) { display: none; }
+.gb-board .canvas-node.gb-stroke.is-selected > .canvas-node-container,
+.gb-board .canvas-node.gb-stroke.is-focused > .canvas-node-container {
+  outline: 1.5px dashed var(--gb-blue);
+  outline-offset: 2px;
+}
+.gb-stroke-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.gb-stroke-svg .gb-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+  cursor: grab;
+}
+.gb-stroke-svg .gb-ink { fill: var(--canvas-color); pointer-events: none; }
+.gb-board .canvas-node.gb-stroke:not(.is-themed) .gb-ink { fill: var(--gb-red); }
+.gb-board .canvas-node.gb-erasing { opacity: 0.25; }
+.gb-board .canvas-node-interaction-layer.gb-target-stroke .canvas-node-connection-point,
+.gb-board .canvas-node-interaction-layer.gb-target-unselected .canvas-node-resizer { display: none; }
+
+.gb-preview { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; pointer-events: none; z-index: 2147483000; }
+.gb-preview svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.gb-rubber {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1.5px dashed var(--gb-blue);
+  background: rgba(93, 178, 255, 0.08);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 2147483000;
+}
+
+/* ---------- overlay that takes the pointer for drawing tools */
+
+.gb-overlay { position: absolute; inset: 0; z-index: 20; display: none; touch-action: none; }
+.gb-board[data-gb-tool="hand"] .gb-overlay,
+.gb-board[data-gb-tool="sticky"] .gb-overlay,
+.gb-board[data-gb-tool="text"] .gb-overlay,
+.gb-board[data-gb-tool="shape"] .gb-overlay,
+.gb-board[data-gb-tool="marker"] .gb-overlay,
+.gb-board[data-gb-tool="eraser"] .gb-overlay,
+.gb-board[data-gb-tool="frame"] .gb-overlay { display: block; }
+.gb-board.gb-space .gb-overlay { pointer-events: none; }
+.gb-board[data-gb-tool="hand"] .gb-overlay { cursor: grab; }
+.gb-board.gb-grabbing .gb-overlay { cursor: grabbing; }
+.gb-board[data-gb-tool="marker"] .gb-overlay,
+.gb-board[data-gb-tool="sticky"] .gb-overlay,
+.gb-board[data-gb-tool="shape"] .gb-overlay,
+.gb-board[data-gb-tool="frame"] .gb-overlay { cursor: crosshair; }
+.gb-board[data-gb-tool="text"] .gb-overlay { cursor: text; }
+.gb-board[data-gb-tool="eraser"] .gb-overlay {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='13' cy='13' r='11' fill='rgba(255,255,255,0.12)' stroke='%23EDEDED' stroke-width='1.5'/%3E%3C/svg%3E") 13 13, cell;
+}
+
+/* core UI above the overlay; the bottom card menu is replaced by the left toolbar */
+.gb-board .canvas-controls,
+.gb-board .canvas-menu-container { z-index: 30; }
+.gb-board .canvas-card-menu { display: none; }
+
+/* ---------- toolbar, panels, zoom and minimap */
+
+.gb-ui {
+  position: absolute;
+  z-index: 31;
+  font-family: var(--font-interface);
+  user-select: none;
+}
+.gb-toolbar,
+.gb-panel,
+.gb-ac-hint,
+.gb-zoom {
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+/* Only while Advanced Canvas is missing or turned off */
+.gb-ac-hint {
+  display: none;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(640px, calc(100% - 140px));
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 14px;
+  border-radius: 12px;
+  color: var(--gb-ink);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.gb-ac-hint.is-open { display: flex; }
+.gb-ac-title { font-weight: 600; }
+.gb-ac-text { color: var(--gb-soft); }
+.gb-ac-action { flex: none; }
+.gb-ac-close { flex: none; display: flex; padding: 4px; border-radius: 6px; color: var(--gb-soft); cursor: pointer; }
+.gb-ac-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--gb-ink); }
+.gb-ac-close .svg-icon { width: 16px; height: 16px; }
+
+.gb-toolbar {
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 14px;
+}
+.gb-tool {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: var(--gb-soft);
+  cursor: pointer;
+}
+.gb-tool:hover { background: rgba(255, 255, 255, 0.08); color: var(--gb-ink); }
+.gb-tool.is-active { background: var(--gb-blue); color: #15181C; }
+.gb-tool .svg-icon { width: 20px; height: 20px; }
+.gb-tool[data-tool="marker"]::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: 24px 0 0 24px;
+  border-radius: 50%;
+  background: var(--gb-marker, var(--gb-red));
+}
+.gb-sep { height: 1px; background: var(--gb-line); margin: 3px 5px; }
+.gb-sep-v { width: 1px; height: auto; margin: 4px 3px; }
+
+.gb-panel {
+  left: 66px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 12px;
+  transform: translateY(-50%);
+}
+.gb-panel.is-open { display: flex; }
+.gb-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--gb-swatch);
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--gb-card);
+  cursor: pointer;
+}
+.gb-swatch.is-active { border-color: var(--gb-ink); }
+.gb-shape { width: 34px; height: 34px; }
+
+/* marker panel: "Width Npx", the slider with a dot of the real width, then the colours */
+.gb-panel.gb-marker-panel.is-open {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 196px;
+  padding: 10px 12px 10px;
+}
+.gb-panel-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--gb-soft);
+}
+.gb-width-value { color: var(--gb-ink); font-variant-numeric: tabular-nums; }
+.gb-width-row { display: flex; align-items: center; gap: 10px; }
+.gb-board .gb-width-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--gb-blue) var(--gb-fill, 10%), var(--gb-line) var(--gb-fill, 10%));
+  box-shadow: none;
+  cursor: pointer;
+}
+.gb-board .gb-width-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--gb-ink);
+  border: 3px solid var(--gb-blue);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+.gb-width-dot {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gb-width-dot > div { border-radius: 50%; }
+.gb-swatches { display: flex; justify-content: space-between; }
+/* own colours under the palette, in its columns (5 x 26 px in 172 px), then "+" with the system colour picker */
+.gb-swatches.gb-recent { justify-content: flex-start; gap: 10.5px; }
+.gb-swatch.gb-add-color {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1.5px dashed var(--gb-soft);
+  box-shadow: none;
+  color: var(--gb-soft);
+}
+.gb-swatch.gb-add-color:hover { border-color: var(--gb-ink); color: var(--gb-ink); }
+.gb-add-color .svg-icon { width: 14px; height: 14px; }
+.gb-board .gb-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* bend points of the selected arrow: white dots on the points, small blue dots in the middle of the segments */
+.gb-bends { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; z-index: 2147482000; pointer-events: none; }
+.gb-bend {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--gb-ink);
+  border: 2px solid var(--gb-blue);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: move;
+}
+.gb-bend.gb-bend-mid {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: var(--gb-blue);
+  border-color: var(--gb-ink);
+  opacity: 0.85;
+  cursor: copy;
+}
+.gb-bend:hover, .gb-bend.is-dragging { background: var(--gb-blue); border-color: var(--gb-ink); opacity: 1; }
+/* the two ends of the arrow: round, drag one to another card */
+.gb-bend.gb-bend-end { border-radius: 50%; background: var(--gb-bg); border-color: var(--gb-blue); opacity: 1; cursor: grab; }
+.gb-bend.gb-bend-end:hover { background: var(--gb-blue); border-color: var(--gb-ink); }
+
+.gb-nav {
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 6px;
+}
+.gb-zoom {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+}
+.gb-zoom-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--gb-soft);
+  cursor: pointer;
+}
+.gb-zoom-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--gb-ink); }
+.gb-zoom-btn.is-active { color: var(--gb-blue); }
+.gb-zoom-btn .svg-icon { width: 17px; height: 17px; }
+.gb-zoom-label {
+  min-width: 54px;
+  text-align: center;
+  color: var(--gb-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.gb-minimap {
+  width: 200px;
+  height: 130px;
+  background: rgba(38, 40, 44, 0.94);
+  border: 1px solid var(--gb-line);
+  border-radius: 11px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  touch-action: none;
+}
+.gb-minimap.is-hidden { display: none; }
+
+.gb-board.canvas-wrapper.is-screenshotting .gb-ui,
+.gb-board.canvas-wrapper.is-screenshotting .gb-overlay { display: none; }
+
+/* ---------- the popup over the selection: one bar for every kind of object, lists open under its buttons.
+   Its own elements are .gb-p; the buttons of Canvas and Advanced Canvas stay in the DOM but are hidden. */
+.gb-board .canvas-menu.gb-popup {
+  align-items: center;
+  gap: 1px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.gb-board .canvas-menu.gb-popup > :not(.gb-p) { display: none; }
+.gb-board .canvas-menu.gb-popup > .gb-p-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: auto;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 5px;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--gb-ink);
+}
+.gb-board .canvas-menu.gb-popup > .gb-p-btn:hover,
+.gb-board .canvas-menu.gb-popup > .gb-p-btn.is-open { background: rgba(255, 255, 255, 0.08); }
+.gb-board .canvas-menu.gb-popup > .gb-p-btn.is-selected { background: rgba(93, 178, 255, 0.16); color: var(--gb-blue); }
+.gb-p-icon { display: inline-flex; }
+.gb-p-icon .svg-icon { width: 17px; height: 17px; }
+.gb-p-chevron { display: inline-flex; color: var(--gb-soft); }
+.gb-p-chevron .svg-icon { width: 12px; height: 12px; }
+.gb-p-sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: var(--gb-line); }
+.gb-p-letter { font-size: 15px; font-weight: 600; line-height: 1; }
+.gb-p-btn.gb-p-lh .gb-p-icon .svg-icon { width: 13px; height: 13px; }
+.gb-p-btn.has-bar::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gb-bar);
+}
+.gb-p-btn.has-bar > :first-child { transform: translateY(-2px); }
+.gb-p-dot {
+  display: block;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gb-dot);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+}
+.gb-p-dot.is-ring { background: transparent; border: 4px solid var(--gb-dot); }
+.gb-p-dot.is-none { position: relative; background: transparent; border: 1.5px solid var(--gb-soft); }
+.gb-p-dot.is-none > span {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1.5px;
+  background: var(--gb-soft);
+  transform: rotate(45deg);
+}
+.gb-p-thick { display: flex; flex-direction: column; justify-content: center; gap: 3px; width: 18px; }
+.gb-p-thick > span { display: block; background: currentColor; border-radius: 2px; }
+.gb-p-thick > span:nth-child(1) { height: 1px; }
+.gb-p-thick > span:nth-child(2) { height: 2px; }
+.gb-p-thick > span:nth-child(3) { height: 4px; }
+.gb-p-filter { text-align: left; font-size: 13px; line-height: 1.15; margin-right: 6px; white-space: nowrap; }
+.gb-p-filter-title { font-size: 11px; color: var(--gb-soft); }
+
+.gb-p-size { display: flex; align-items: center; height: 30px; }
+.gb-board .gb-p-size input {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--gb-ink);
+  font-size: 14px;
+  text-align: center;
+}
+.gb-board .gb-p-size input:hover,
+.gb-board .gb-p-size input:focus { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+.gb-p-steps { display: flex; flex-direction: column; }
+.gb-board .gb-p-steps button { width: 18px; height: 14px; padding: 0; background: transparent; box-shadow: none; color: var(--gb-soft); }
+.gb-board .gb-p-steps button:hover { color: var(--gb-ink); background: rgba(255, 255, 255, 0.08); }
+.gb-p-steps .svg-icon { width: 12px; height: 12px; }
+
+.gb-board .canvas-menu.gb-popup > .gb-p-drop {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 172px;
+  max-width: 248px;
+  padding: 10px;
+  border-radius: 11px;
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: var(--gb-ink);
+}
+.gb-p-title { font-size: 12px; color: var(--gb-soft); }
+.gb-p-title:not(:first-child) { margin-top: 2px; }
+.gb-p-grid { display: grid; gap: 4px; }
+.gb-p-grid-3 { grid-template-columns: repeat(3, 36px); }
+.gb-p-grid-4 { grid-template-columns: repeat(4, 36px); }
+.gb-p-list { grid-template-columns: minmax(0, 1fr); gap: 1px; }
+.gb-p-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--gb-ink);
+  cursor: pointer;
+}
+.gb-p-opt:hover { background: rgba(255, 255, 255, 0.08); }
+/* the chosen option: blue, with a line under it */
+.gb-p-opt.is-selected { color: var(--gb-blue); }
+.gb-p-opt.is-selected:not(.gb-p-row)::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--gb-blue);
+}
+.gb-p-opt.gb-p-row { justify-content: flex-start; gap: 10px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+.gb-p-opt.gb-p-row.is-selected { background: rgba(93, 178, 255, 0.16); }
+.gb-p-opt-text { flex: 1 1 auto; }
+.gb-p-count { margin-left: 18px; color: var(--gb-soft); font-size: 13px; }
+.gb-p-colors { display: grid; grid-template-columns: repeat(6, 26px); gap: 6px; }
+.gb-p-colors .gb-swatch { box-sizing: border-box; }
+.gb-p-colors .gb-swatch.is-selected { border-color: var(--gb-blue); }
+.gb-swatch.gb-swatch-special {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-color: var(--gb-line);
+  box-shadow: none;
+  color: var(--gb-soft);
+}
+.gb-swatch-special .svg-icon { width: 14px; height: 14px; }
+.gb-p-colors .gb-swatch-special.is-selected { color: var(--gb-blue); }
+.gb-p-drop .gb-width-slider { width: 100%; }
+
+/* ---------- context menu of board elements (right click or "..." in the card popup), Holst-like:
+   compact rows without icons, hotkeys on the right, groups split by thin lines, a plain Delete at the bottom */
+.menu.gb-menu {
+  min-width: 250px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #2B2E34;
+  border: 1px solid #42454D;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.menu.gb-menu .menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: #EDEDED;
+  font-size: 14px;
+}
+.menu.gb-menu .menu-item:hover,
+.menu.gb-menu .menu-item.selected { background: rgba(255, 255, 255, 0.08); }
+.menu.gb-menu .menu-item-icon:not(.mod-submenu) { display: none; }
+.menu.gb-menu .menu-item-title { flex: 1 1 auto; }
+.menu.gb-menu .gb-menu-hotkey {
+  margin-left: auto;
+  padding-left: 28px;
+  color: #8B8E95;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.menu.gb-menu .menu-item.is-warning,
+.menu.gb-menu .menu-item.is-warning:hover,
+.menu.gb-menu .menu-item.is-warning.selected { color: #EDEDED; }
+.menu.gb-menu .menu-item.is-warning:hover,
+.menu.gb-menu .menu-item.is-warning.selected { background: rgba(255, 255, 255, 0.08); }
+.menu.gb-menu .menu-item.is-warning .menu-item-icon { color: inherit; }
+.menu.gb-menu .menu-separator { margin: 5px 4px; border-top: 1px solid #42454D; height: 0; }
